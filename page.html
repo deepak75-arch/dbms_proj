@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Recovery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .delete-btn {
+            background: #dc3545;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Database Backup & Recovery</h1>
+
+        <h2>Upload Backup</h2>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" required>
+            <button type="submit">Upload</button>
+        </form>
+        <p id="uploadMessage"></p>
+
+        <h2>Available Backups</h2>
+        <ul id="fileList"></ul>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            let formData = new FormData();
+            let fileInput = document.getElementById('fileInput');
+            formData.append("file", fileInput.files[0]);
+
+            fetch('/upload', { method: 'POST', body: formData })
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('uploadMessage').innerText = data;
+                    loadFiles();
+                });
+        });
+
+        function loadFiles() {
+            fetch('/files')
+                .then(response => response.json())
+                .then(files => {
+                    let fileList = document.getElementById('fileList');
+                    fileList.innerHTML = "";
+                    files.forEach(file => {
+                        let li = document.createElement("li");
+                        li.innerHTML = `
+                            ${file} 
+                            <a href="/download/${file}" class="download-btn">Download</a>
+                            <button class="delete-btn" onclick="deleteFile('${file}')">Delete</button>
+                        `;
+                        fileList.appendChild(li);
+                    });
+                });
+        }
+
+        function deleteFile(filename) {
+            fetch(`/delete/${filename}`, { method: 'POST' })
+                .then(response => response.text())
+                .then(() => {
+                    loadFiles();
+                });
+        }
+
+        loadFiles();
+    </script>
+</body>
+</html>
